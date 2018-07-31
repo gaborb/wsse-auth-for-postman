@@ -1,0 +1,144 @@
+{
+	"info": {
+		"_postman_id": "5b1d9f54-ff68-453c-8d54-023d44f7b7e2",
+		"name": "Auth",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "WsseAuth Request",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "9e2c4871-b5e5-4d02-b3cc-47ff4fe13b6f",
+						"type": "text/javascript",
+						"exec": [
+							"pm.test(\"response is ok\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"wsse header should be returned in response body\", function () {",
+							"    pm.response.to.have.jsonBody('headers.x-wsse');",
+							"});"
+						]
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "db326335-e504-476a-aa19-c666db2678c9",
+						"type": "text/javascript",
+						"exec": [
+							"((pm, module) => {",
+							"  \"use strict\";",
+							"",
+							"  const uuid = require(\"uuid\");",
+							"  const CryptoJS = require(\"crypto-js\");",
+							"",
+							"  class WsseAuth {",
+							"    static _getNonce() {",
+							"      const rand = uuid.v4();",
+							"      const hex = CryptoJS.enc.Utf8.parse(rand).toString(CryptoJS.enc.Hex);",
+							"      return hex.substring(hex.length - 32);",
+							"    }",
+							"",
+							"    static _getTimestamp() {",
+							"      return new Date().toISOString();",
+							"    }",
+							"",
+							"    static _getDigest(nonce, timestamp, secret) {",
+							"      const hex = CryptoJS.SHA1(\"\" + nonce + timestamp + secret).toString(",
+							"        CryptoJS.enc.Hex",
+							"      );",
+							"      return CryptoJS.enc.Utf8.parse(hex).toString(CryptoJS.enc.Base64);",
+							"    }",
+							"",
+							"    static getHeader(username, secret) {",
+							"      const nonce = WsseAuth._getNonce();",
+							"      const timestamp = WsseAuth._getTimestamp();",
+							"      const digest = WsseAuth._getDigest(nonce, timestamp, secret);",
+							"      const header = `UsernameToken Username=\"${username}\", PasswordDigest=\"${digest}\", Nonce=\"${nonce}\", Created=\"${timestamp}\"`;",
+							"      return { \"x-wsse\": header };",
+							"    }",
+							"  }",
+							"",
+							"  if (module) {",
+							"    module.exports = WsseAuth;",
+							"  }",
+							"",
+							"  if (pm) {",
+							"    const username = pm.variables.get(\"x-wsse-username\");",
+							"    const secret = pm.variables.get(\"x-wsse-secret\");",
+							"    const header = WsseAuth.getHeader(username, secret);",
+							"    pm.variables.set(\"x-wsse\", header[\"x-wsse\"]);",
+							"  }",
+							"})(",
+							"  typeof pm === \"undefined\" ? null : pm,",
+							"  typeof module === \"undefined\" ? null : module",
+							");",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-wsse",
+						"value": "{{x-wsse}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "https://postman-echo.com/headers",
+					"protocol": "https",
+					"host": [
+						"postman-echo",
+						"com"
+					],
+					"path": [
+						"headers"
+					]
+				},
+				"description": "A `GET` request to this endpoint returns the list of all request headers as part of the response JSON.\nIn Postman, sending your own set of headers through the [Headers tab](https://www.getpostman.com/docs/requests#headers?source=echo-collection-app-onboarding) will reveal the headers as part of the response."
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "3e062b0f-df11-412f-9f2e-cfa2067592a5",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "6855fd45-eefa-415a-b2ce-9a8bfd37570d",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"id": "4b58e02a-8fdf-4262-bc0d-4de1d2b56e3b",
+			"key": "x-wsse",
+			"value": "Lorem ipsum",
+			"type": "string",
+			"description": ""
+		}
+	]
+}
